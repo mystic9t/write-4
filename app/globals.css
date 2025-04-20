@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Animation delay utilities */
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Dark mode select styling */
+select.dark-select {
+  color-scheme: dark;
+}
+
+select.dark-select option {
+  background-color: #0f172a !important; /* dark-900 */
+  color: white !important;
+  opacity: 1 !important;
+}
+
+select.dark-select:focus {
+  border-color: #0ea5e9; /* primary-500 */
+}
+
+/* Custom dropdown styling */
+.dark-dropdown-menu {
+  background-color: #0f172a !important;
+  color: white !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+.dark-dropdown-item {
+  background-color: transparent !important;
+  color: white !important;
+  opacity: 1 !important;
+}
+
+.dark-dropdown-item:hover {
+  background-color: #1e293b !important;
+}
+
+/* Firefox specific styling */
+@-moz-document url-prefix() {
+  select.dark-select {
+    background-color: #0f172a !important;
+    color: white !important;
+  }
+
+  select.dark-select option {
+    background-color: #0f172a !important;
+    color: white !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Editor styles */
+.ProseMirror {
+  outline: none;
+  min-height: 400px;
+  color: white;
+}
+
+.ProseMirror p {
+  margin-bottom: 1em;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  color: white;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  color: white;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid #4b5563;
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.ProseMirror code {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0.25em;
+  padding: 0.2em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.ProseMirror pre {
+  background-color: #1e293b;
+  border-radius: 0.5em;
+  padding: 1em;
+  margin-bottom: 1em;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.9em;
+}
