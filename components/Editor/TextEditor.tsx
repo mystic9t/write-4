@@ -293,7 +293,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       <div className="mt-4 border border-dark-800 rounded-lg p-4 bg-dark-900 shadow-lg animate-fade-in">
         <h3 className="font-medium mb-2 text-primary-400 flex items-center">
           <Sparkles className="mr-2" size={18} />
-          World-Forge AI Suggestion
+          Word-Forge AI Suggestion
         </h3>
         <div className="mb-4 bg-dark-800 p-3 rounded-md">
           {diffResults.map((line, lineIndex) => (

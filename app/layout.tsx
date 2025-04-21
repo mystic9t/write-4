@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "World-Forge | AI-Powered Text Editor",
+  title: "Word-Forge | AI-Powered Text Editor",
   description: "Create immersive worlds and compelling stories with AI assistance",
 };
 
