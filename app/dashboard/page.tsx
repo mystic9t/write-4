@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { Globe, Users, BookOpen, Plus, Loader2, Settings } from "lucide-react";
 
 export default function DashboardPage() {
   const { worlds, characters, stories, isLoading, error } = useDatabase();
-  const [activeTab, setActiveTab] = useState<"worlds" | "characters" | "stories">("worlds");
 
   if (isLoading) {
     return (
@@ -70,209 +69,90 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="flex border-b border-dark-800 mb-8">
-          <button
-            className={`px-6 py-3 ${activeTab === "worlds" ? "border-b-2 border-primary-500 text-primary-400" : "text-dark-300"}`}
-            onClick={() => setActiveTab("worlds")}
-          >
-            <div className="flex items-center">
-              <Globe className="h-5 w-5 mr-2" />
-              <span>Worlds ({worlds.length})</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Worlds Summary Card */}
+          <div className="bg-dark-900/80 backdrop-blur-sm border border-dark-800 rounded-xl p-6 shadow-xl hover:shadow-primary-900/10 transition-all duration-300 hover:border-dark-700">
+            <div className="flex items-center mb-4">
+              <Globe className="h-8 w-8 text-primary-400 mr-3" />
+              <h3 className="text-xl font-semibold text-white">Worlds</h3>
             </div>
-          </button>
-          <button
-            className={`px-6 py-3 ${activeTab === "characters" ? "border-b-2 border-primary-500 text-primary-400" : "text-dark-300"}`}
-            onClick={() => setActiveTab("characters")}
-          >
-            <div className="flex items-center">
-              <Users className="h-5 w-5 mr-2" />
-              <span>Characters ({characters.length})</span>
+            <p className="text-4xl font-bold mb-4">{worlds.length}</p>
+            <div className="flex justify-between items-center">
+              <Link href="/world-building/create" className="text-primary-400 hover:text-primary-300 transition-colors text-sm flex items-center">
+                <Plus size={14} className="mr-1" />
+                Create New
+              </Link>
+              <Link href="/world-building/list" className="text-primary-400 hover:text-primary-300 transition-colors text-sm">
+                View All
+              </Link>
             </div>
-          </button>
-          <button
-            className={`px-6 py-3 ${activeTab === "stories" ? "border-b-2 border-primary-500 text-primary-400" : "text-dark-300"}`}
-            onClick={() => setActiveTab("stories")}
-          >
-            <div className="flex items-center">
-              <BookOpen className="h-5 w-5 mr-2" />
-              <span>Stories ({stories.length})</span>
+          </div>
+
+          {/* Characters Summary Card */}
+          <div className="bg-dark-900/80 backdrop-blur-sm border border-dark-800 rounded-xl p-6 shadow-xl hover:shadow-primary-900/10 transition-all duration-300 hover:border-dark-700">
+            <div className="flex items-center mb-4">
+              <Users className="h-8 w-8 text-primary-400 mr-3" />
+              <h3 className="text-xl font-semibold text-white">Characters</h3>
             </div>
-          </button>
+            <p className="text-4xl font-bold mb-4">{characters.length}</p>
+            <div className="flex justify-between items-center">
+              <Link href="/character-creation/create" className="text-primary-400 hover:text-primary-300 transition-colors text-sm flex items-center">
+                <Plus size={14} className="mr-1" />
+                Create New
+              </Link>
+              <Link href="/character-creation/list" className="text-primary-400 hover:text-primary-300 transition-colors text-sm">
+                View All
+              </Link>
+            </div>
+          </div>
+
+          {/* Stories Summary Card */}
+          <div className="bg-dark-900/80 backdrop-blur-sm border border-dark-800 rounded-xl p-6 shadow-xl hover:shadow-primary-900/10 transition-all duration-300 hover:border-dark-700">
+            <div className="flex items-center mb-4">
+              <BookOpen className="h-8 w-8 text-primary-400 mr-3" />
+              <h3 className="text-xl font-semibold text-white">Stories</h3>
+            </div>
+            <p className="text-4xl font-bold mb-4">{stories.length}</p>
+            <div className="flex justify-between items-center">
+              <Link href="/story-crafting/create" className="text-primary-400 hover:text-primary-300 transition-colors text-sm flex items-center">
+                <Plus size={14} className="mr-1" />
+                Create New
+              </Link>
+              <Link href="/story-crafting/list" className="text-primary-400 hover:text-primary-300 transition-colors text-sm">
+                View All
+              </Link>
+            </div>
+          </div>
         </div>
 
-        {activeTab === "worlds" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Your Worlds</h2>
-              <Link
-                href="/world-building/create"
-                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-              >
-                <Plus size={18} className="mr-2" />
-                Create New World
-              </Link>
-            </div>
-
-            {worlds.length === 0 ? (
-              <div className="bg-dark-900 border border-dark-800 rounded-lg p-8 text-center">
-                <Globe className="h-16 w-16 text-dark-700 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-dark-300 mb-2">No Worlds Yet</h3>
-                <p className="text-dark-400 mb-6">Create your first world to get started.</p>
-                <Link
-                  href="/world-building/create"
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-                >
-                  <Plus size={18} className="mr-2" />
-                  Create World
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {worlds.map((world) => (
-                  <div key={world.id} className="bg-dark-900 border border-dark-800 rounded-lg overflow-hidden hover:border-dark-700 transition-all duration-300">
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-white mb-2">{world.name}</h3>
-                      <p className="text-dark-300 text-sm mb-4 line-clamp-3">
-                        {world.geography.substring(0, 150)}...
-                      </p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-dark-400 text-xs">
-                          {new Date(world.createdAt).toLocaleDateString()}
-                        </span>
-                        <Link
-                          href={`/world-building/${world.id}`}
-                          className="text-primary-400 hover:text-primary-300 transition-colors text-sm"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Quick Actions */}
+        <div className="bg-dark-900/80 backdrop-blur-sm border border-dark-800 rounded-xl p-6 shadow-xl mb-8">
+          <h3 className="text-xl font-semibold text-white mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link href="/world-building/create" className="flex items-center p-3 bg-dark-800/90 rounded-lg hover:bg-dark-700/90 transition-all duration-300">
+              <Globe className="h-5 w-5 text-primary-400 mr-3" />
+              <span>Create New World</span>
+            </Link>
+            <Link href="/character-creation/create" className="flex items-center p-3 bg-dark-800/90 rounded-lg hover:bg-dark-700/90 transition-all duration-300">
+              <Users className="h-5 w-5 text-primary-400 mr-3" />
+              <span>Create New Character</span>
+            </Link>
+            <Link href="/story-crafting/create" className="flex items-center p-3 bg-dark-800/90 rounded-lg hover:bg-dark-700/90 transition-all duration-300">
+              <BookOpen className="h-5 w-5 text-primary-400 mr-3" />
+              <span>Create New Story</span>
+            </Link>
+            <Link href="/editor" className="flex items-center p-3 bg-dark-800/90 rounded-lg hover:bg-dark-700/90 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Open Editor</span>
+            </Link>
+            <Link href="/settings" className="flex items-center p-3 bg-dark-800/90 rounded-lg hover:bg-dark-700/90 transition-all duration-300">
+              <Settings className="h-5 w-5 text-primary-400 mr-3" />
+              <span>Settings</span>
+            </Link>
           </div>
-        )}
-
-        {activeTab === "characters" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Your Characters</h2>
-              <Link
-                href="/character-creation/create"
-                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-              >
-                <Plus size={18} className="mr-2" />
-                Create New Character
-              </Link>
-            </div>
-
-            {characters.length === 0 ? (
-              <div className="bg-dark-900 border border-dark-800 rounded-lg p-8 text-center">
-                <Users className="h-16 w-16 text-dark-700 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-dark-300 mb-2">No Characters Yet</h3>
-                <p className="text-dark-400 mb-6">Create your first character to get started.</p>
-                <Link
-                  href="/character-creation/create"
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-                >
-                  <Plus size={18} className="mr-2" />
-                  Create Character
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {characters.map((character) => {
-                  const characterWorld = worlds.find(w => w.id === character.worldId);
-                  return (
-                    <div key={character.id} className="bg-dark-900 border border-dark-800 rounded-lg overflow-hidden hover:border-dark-700 transition-all duration-300">
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold text-white mb-1">{character.name}</h3>
-                        <p className="text-primary-400 text-sm mb-3">
-                          {characterWorld ? characterWorld.name : "Unknown World"}
-                        </p>
-                        <p className="text-dark-300 text-sm mb-4 line-clamp-3">
-                          {character.profile.substring(0, 150)}...
-                        </p>
-                        <div className="flex justify-between items-center">
-                          <span className="text-dark-400 text-xs">
-                            {new Date(character.createdAt).toLocaleDateString()}
-                          </span>
-                          <Link
-                            href={`/character-creation/${character.id}`}
-                            className="text-primary-400 hover:text-primary-300 transition-colors text-sm"
-                          >
-                            View Details
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "stories" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Your Stories</h2>
-              <Link
-                href="/story-crafting/create"
-                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-              >
-                <Plus size={18} className="mr-2" />
-                Create New Story
-              </Link>
-            </div>
-
-            {stories.length === 0 ? (
-              <div className="bg-dark-900 border border-dark-800 rounded-lg p-8 text-center">
-                <BookOpen className="h-16 w-16 text-dark-700 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-dark-300 mb-2">No Stories Yet</h3>
-                <p className="text-dark-400 mb-6">Create your first story to get started.</p>
-                <Link
-                  href="/story-crafting/create"
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
-                >
-                  <Plus size={18} className="mr-2" />
-                  Create Story
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stories.map((story) => {
-                  const storyWorld = worlds.find(w => w.id === story.worldId);
-                  return (
-                    <div key={story.id} className="bg-dark-900 border border-dark-800 rounded-lg overflow-hidden hover:border-dark-700 transition-all duration-300">
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold text-white mb-1">{story.title}</h3>
-                        <p className="text-primary-400 text-sm mb-3">
-                          {storyWorld ? storyWorld.name : "Unknown World"}
-                        </p>
-                        <p className="text-dark-300 text-sm mb-4 line-clamp-3">
-                          {story.plotStructure.substring(0, 150)}...
-                        </p>
-                        <div className="flex justify-between items-center">
-                          <span className="text-dark-400 text-xs">
-                            {new Date(story.createdAt).toLocaleDateString()}
-                          </span>
-                          <Link
-                            href={`/story-crafting/${story.id}`}
-                            className="text-primary-400 hover:text-primary-300 transition-colors text-sm"
-                          >
-                            View Details
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        </div>
       </main>
     </div>
   );
