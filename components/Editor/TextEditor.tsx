@@ -13,18 +13,32 @@ import {
   Bold, Italic, List, ListOrdered,
   Heading1, Heading2, Image as ImageIcon,
   Code, Quote, Undo, Redo, Type,
-  Wand2, Sparkles, Zap, Lightbulb
+  Wand2, Sparkles, Zap, Lightbulb,
+  Globe, Users, ArrowLeft, Save
 } from "lucide-react";
 import { computeLineDiff, TextDiff } from "@/lib/diffUtils";
 
 interface TextEditorProps {
   initialContent?: string;
   onSave?: (content: string) => void;
+  documentType?: 'world' | 'character' | 'story' | 'generic';
+  documentId?: string;
+  documentRelations?: {
+    worldId?: string;
+    worldName?: string;
+    characterIds?: string[];
+    characterNames?: string[];
+  };
+  referrer?: string;
 }
 
 const TextEditor: React.FC<TextEditorProps> = ({
   initialContent = "",
-  onSave
+  onSave,
+  documentType = 'generic',
+  documentId,
+  documentRelations,
+  referrer
 }) => {
   const [content, setContent] = useState(initialContent);
   const [selectedText, setSelectedText] = useState("");
