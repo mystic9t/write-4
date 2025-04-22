@@ -17,7 +17,6 @@ export default function CreateCharacterPage() {
   const router = useRouter();
 
   const [selectedWorldId, setSelectedWorldId] = useState<string | null>(null);
-  const [showWorldPrompt, setShowWorldPrompt] = useState(false);
 
   const [characterName, setCharacterName] = useState("");
   const [profile, setProfile] = useState("");
@@ -32,38 +31,33 @@ export default function CreateCharacterPage() {
   // Custom success modal state
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
-  // Check if worlds exist on component mount - only runs once when worlds data is loaded
+  // Auto-select the world if there's only one
   useEffect(() => {
-    // Show world prompt if no worlds exist
-    if (worlds.length === 0) {
-      setShowWorldPrompt(true);
-    } else if (worlds.length === 1) {
+    if (worlds.length === 1) {
       // Auto-select the only world
       setSelectedWorldId(worlds[0].id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - only run once on mount
+  }, [worlds]); // Run when worlds change
 
   // AI assistance for each section
   const generateWithAI = async (section: string, prompt: string) => {
-    if (!selectedWorldId) {
-      showConfirmModal({
-        title: "World Required",
-        message: "Please select a world first",
-        onConfirm: () => {},
-        confirmLabel: "OK",
-        cancelLabel: ""
-      });
-      return;
-    }
-
     setIsGenerating(true);
     try {
-      // Get the selected world data to provide context
-      const selectedWorld = worlds.find(world => world.id === selectedWorldId);
+      // Prepare context based on whether a world is selected
+      let contextText = "";
+      let instruction = "";
 
-      if (!selectedWorld) {
-        throw new Error("Selected world not found");
+      if (selectedWorldId) {
+        // Get the selected world data to provide context
+        const selectedWorld = worlds.find(world => world.id === selectedWorldId);
+
+        if (selectedWorld) {
+          contextText = `World Context: ${selectedWorld.name} is a world with ${selectedWorld.geography.substring(0, 100)}...\n`;
+          instruction = `Generate detailed ${section} for a character that fits in this world`;
+        }
+      } else {
+        instruction = `Generate detailed ${section} for a character`;
       }
 
       // Call the AI endpoint with settings
@@ -73,9 +67,8 @@ export default function CreateCharacterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: `World Context: ${selectedWorld.name} is a world with ${selectedWorld.geography.substring(0, 100)}...
-                 Character Prompt: ${prompt}`,
-          instruction: `Generate detailed ${section} for a character that fits in this world`,
+          text: `${contextText}Character Prompt: ${prompt}`,
+          instruction: instruction,
           provider: settings.aiProvider,
           temperature: settings.temperature,
           maxTokens: settings.maxTokens
@@ -121,24 +114,19 @@ export default function CreateCharacterPage() {
 
   // Auto-generate entire character
   const autoGenerateCharacter = async (prompt: string) => {
-    if (!selectedWorldId) {
-      showConfirmModal({
-        title: "World Required",
-        message: "Please select a world first",
-        onConfirm: () => {},
-        confirmLabel: "OK",
-        cancelLabel: ""
-      });
-      return;
-    }
 
     setIsGenerating(true);
     try {
-      // Get the selected world data to provide context
-      const selectedWorld = worlds.find(world => world.id === selectedWorldId);
+      // Prepare context based on whether a world is selected
+      let contextText = "";
 
-      if (!selectedWorld) {
-        throw new Error("Selected world not found");
+      if (selectedWorldId) {
+        // Get the selected world data to provide context
+        const selectedWorld = worlds.find(world => world.id === selectedWorldId);
+
+        if (selectedWorld) {
+          contextText = `World Context: ${selectedWorld.name} is a world with ${selectedWorld.geography.substring(0, 100)}...\n`;
+        }
       }
 
       // Call the AI endpoint with settings
@@ -148,9 +136,10 @@ export default function CreateCharacterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          text: `World Context: ${selectedWorld.name} is a world with ${selectedWorld.geography.substring(0, 100)}...
-                 Character Prompt: ${prompt}`,
-          instruction: "Generate a complete character with profile, backstory, relationships, and character arc that fits in this world",
+          text: `${contextText}Character Prompt: ${prompt}`,
+          instruction: selectedWorldId
+            ? "Generate a complete character with profile, backstory, relationships, and character arc that fits in this world"
+            : "Generate a complete character with profile, backstory, relationships, and character arc",
           provider: settings.aiProvider,
           temperature: settings.temperature,
           maxTokens: settings.maxTokens
@@ -205,17 +194,6 @@ export default function CreateCharacterPage() {
       return;
     }
 
-    if (!selectedWorldId) {
-      showConfirmModal({
-        title: "Missing Information",
-        message: "Please select a world",
-        onConfirm: () => {},
-        confirmLabel: "OK",
-        cancelLabel: ""
-      });
-      return;
-    }
-
     setIsSaving(true);
     try {
       // Save to IndexedDB using our database context
@@ -244,67 +222,7 @@ export default function CreateCharacterPage() {
     }
   };
 
-  // Handle world creation choice
-  const handleWorldCreationChoice = (choice: 'auto' | 'manual') => {
-    if (choice === 'auto') {
-      showInputModal({
-        title: "Describe the world you want to create",
-        placeholder: "A medieval fantasy world with magic and diverse cultures...",
-        onSubmit: (value) => {
-          if (value.trim()) {
-            // In a real implementation, this would call your World Building Agent
-            // For now, we'll just redirect to the world creation page
-            window.location.href = `/world-building/create?prompt=${encodeURIComponent(value)}`;
-          }
-        }
-      });
-    } else {
-      // Redirect to manual world creation
-      window.location.href = "/world-building/create";
-    }
-  };
 
-  // If no worlds exist, show the world creation prompt
-  if (showWorldPrompt) {
-    return (
-      <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
-        <div className="max-w-md w-full p-8 bg-dark-900 rounded-xl shadow-2xl">
-          <div className="flex items-center justify-center mb-6">
-            <Globe className="h-12 w-12 text-primary-400 mr-4" />
-            <h2 className="text-2xl font-bold text-white">Create a World First</h2>
-          </div>
-
-          <p className="text-dark-300 mb-8 text-center">
-            Characters need a world to exist in. Please create a world first.
-          </p>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => handleWorldCreationChoice('auto')}
-              className="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-all duration-300 flex items-center justify-center"
-            >
-              <Wand2 className="mr-2" size={18} />
-              Auto-Generate World
-            </button>
-
-            <button
-              onClick={() => handleWorldCreationChoice('manual')}
-              className="w-full py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 flex items-center justify-center"
-            >
-              <Globe className="mr-2" size={18} />
-              Create World Manually
-            </button>
-
-            <div className="pt-4 text-center">
-              <Link href="/character-creation" className="text-primary-400 hover:text-primary-300 transition-colors">
-                Cancel and go back
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-dark-950 text-white">
@@ -375,7 +293,7 @@ export default function CreateCharacterPage() {
                   }
                 });
               }}
-                disabled={isGenerating || !selectedWorldId}
+                disabled={isGenerating}
                 className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Wand2 size={18} className="mr-2" />
@@ -426,7 +344,7 @@ export default function CreateCharacterPage() {
                             }
                           });
                         }}
-                        disabled={isGenerating || !selectedWorldId}
+                        disabled={isGenerating}
                         className="flex items-center px-3 py-1 bg-dark-800 text-white rounded-md hover:bg-dark-700 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Wand2 size={14} className="mr-1" />
@@ -456,7 +374,7 @@ export default function CreateCharacterPage() {
                             }
                           });
                         }}
-                        disabled={isGenerating || !selectedWorldId}
+                        disabled={isGenerating}
                         className="flex items-center px-3 py-1 bg-dark-800 text-white rounded-md hover:bg-dark-700 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Wand2 size={14} className="mr-1" />
@@ -486,7 +404,7 @@ export default function CreateCharacterPage() {
                             }
                           });
                         }}
-                        disabled={isGenerating || !selectedWorldId}
+                        disabled={isGenerating}
                         className="flex items-center px-3 py-1 bg-dark-800 text-white rounded-md hover:bg-dark-700 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Wand2 size={14} className="mr-1" />
@@ -516,7 +434,7 @@ export default function CreateCharacterPage() {
                             }
                           });
                         }}
-                        disabled={isGenerating || !selectedWorldId}
+                        disabled={isGenerating}
                         className="flex items-center px-3 py-1 bg-dark-800 text-white rounded-md hover:bg-dark-700 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Wand2 size={14} className="mr-1" />
@@ -537,7 +455,7 @@ export default function CreateCharacterPage() {
             <div className="flex justify-end">
               <button
                 onClick={saveCharacter}
-                disabled={isSaving || !characterName || !selectedWorldId}
+                disabled={isSaving || !characterName}
                 className="flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-all duration-300 shadow-lg hover:shadow-primary-600/20 hover:-translate-y-1 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
               >
                 <Save size={18} className="mr-2" />

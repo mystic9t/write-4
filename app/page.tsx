@@ -20,17 +20,17 @@ export default function Home() {
 
         <div className="flex gap-4 flex-col sm:flex-row animate-slide-up">
           <Link
-            href="/dashboard"
+            href="/editor"
             className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-all duration-300 shadow-lg hover:shadow-primary-600/20 hover:-translate-y-1"
           >
-            Dashboard
+            Open Editor
           </Link>
 
           <Link
-            href="/world-building/create"
+            href="/dashboard"
             className="px-6 py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 shadow-lg hover:shadow-dark-800/20 hover:-translate-y-1 border border-dark-700"
           >
-            Create New World
+            Dashboard
           </Link>
         </div>
 

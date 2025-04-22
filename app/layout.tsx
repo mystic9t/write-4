@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Word-Forge | AI-Powered Text Editor",
-  description: "Create immersive worlds and compelling stories with AI assistance",
+  title: "Word-Forge | AI-Powered Story Editor",
+  description: "Write and edit stories with AI assistance for world building, character creation, and narrative development",
 };
 
 export default function RootLayout({

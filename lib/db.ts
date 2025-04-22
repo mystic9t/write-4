@@ -19,7 +19,7 @@ export interface World {
 export interface Character {
   id?: string;
   name: string;
-  worldId: string;
+  worldId?: string;
   profile: string;
   backstory: string;
   relationships: string;
@@ -30,7 +30,7 @@ export interface Character {
 export interface Story {
   id?: string;
   title: string;
-  worldId: string;
+  worldId?: string;
   plotStructure: string;
   scenes: string;
   dialogue: string;
@@ -243,17 +243,23 @@ export const worldsDB = {
     // Delete the world
     await db.worlds.delete(id);
 
-    // Delete related characters
-    await db.characters.where('worldId').equals(id).delete();
+    // Update related characters to remove worldId instead of deleting them
+    const charactersToUpdate = await db.characters.where('worldId').equals(id).toArray();
+    for (const character of charactersToUpdate) {
+      if (character.id) {
+        // Remove the worldId reference
+        character.worldId = undefined;
+        await db.characters.put(character);
+      }
+    }
 
-    // Delete related stories
-    const storiesToDelete = await db.stories.where('worldId').equals(id).toArray();
-    for (const story of storiesToDelete) {
+    // Update related stories to remove worldId instead of deleting them
+    const storiesToUpdate = await db.stories.where('worldId').equals(id).toArray();
+    for (const story of storiesToUpdate) {
       if (story.id) {
-        // Delete story character relationships
-        await db.storyCharacters.where('storyId').equals(story.id).delete();
-        // Delete the story
-        await db.stories.delete(story.id);
+        // Remove the worldId reference
+        story.worldId = undefined;
+        await db.stories.put(story);
       }
     }
   }
@@ -270,6 +276,9 @@ export const charactersDB = {
   },
 
   async getByWorldId(worldId: string): Promise<Character[]> {
+    if (!worldId) {
+      return await db.characters.filter(char => !char.worldId).toArray();
+    }
     return await db.characters.where('worldId').equals(worldId).toArray();
   },
 
@@ -311,6 +320,9 @@ export const storiesDB = {
   },
 
   async getByWorldId(worldId: string): Promise<Story[]> {
+    if (!worldId) {
+      return await db.stories.filter(story => !story.worldId).toArray();
+    }
     return await db.stories.where('worldId').equals(worldId).toArray();
   },
 

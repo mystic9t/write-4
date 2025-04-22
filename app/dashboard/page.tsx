@@ -57,6 +57,19 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto py-12 px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-white">Your Content</h2>
+          <Link
+            href="/editor"
+            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500 transition-all duration-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Open Editor
+          </Link>
+        </div>
+
         <div className="flex border-b border-dark-800 mb-8">
           <button
             className={`px-6 py-3 ${activeTab === "worlds" ? "border-b-2 border-primary-500 text-primary-400" : "text-dark-300"}`}
