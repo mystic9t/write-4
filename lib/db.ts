@@ -1,95 +1,13 @@
 /**
- * Client-side database service using IndexedDB
+ * Client-side database service using Dexie (IndexedDB wrapper)
  */
+import Dexie, { Table } from 'dexie';
 
-// Database version - increment when schema changes
-const DB_VERSION = 1;
-const DB_NAME = 'word-forge-db';
-
-// Database schema
-const STORES = {
-  WORLDS: 'worlds',
-  CHARACTERS: 'characters',
-  STORIES: 'stories',
-  STORY_CHARACTERS: 'story_characters'
-};
-
-// Initialize the database
-async function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = (event) => {
-      console.error('Error opening database:', event);
-      reject(new Error('Could not open database'));
-    };
-
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      resolve(db);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      
-      // Create object stores if they don't exist
-      if (!db.objectStoreNames.contains(STORES.WORLDS)) {
-        const worldStore = db.createObjectStore(STORES.WORLDS, { keyPath: 'id' });
-        worldStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-      
-      if (!db.objectStoreNames.contains(STORES.CHARACTERS)) {
-        const characterStore = db.createObjectStore(STORES.CHARACTERS, { keyPath: 'id' });
-        characterStore.createIndex('worldId', 'worldId', { unique: false });
-        characterStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-      
-      if (!db.objectStoreNames.contains(STORES.STORIES)) {
-        const storyStore = db.createObjectStore(STORES.STORIES, { keyPath: 'id' });
-        storyStore.createIndex('worldId', 'worldId', { unique: false });
-        storyStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-      
-      if (!db.objectStoreNames.contains(STORES.STORY_CHARACTERS)) {
-        const storyCharacterStore = db.createObjectStore(STORES.STORY_CHARACTERS, { keyPath: ['storyId', 'characterId'] });
-        storyCharacterStore.createIndex('storyId', 'storyId', { unique: false });
-        storyCharacterStore.createIndex('characterId', 'characterId', { unique: false });
-      }
-    };
-  });
-}
-
-// Generic function to perform a database operation
-async function dbOperation<T>(
-  storeName: string, 
-  mode: IDBTransactionMode,
-  operation: (store: IDBObjectStore) => IDBRequest<T>
-): Promise<T> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(storeName, mode);
-    const store = transaction.objectStore(storeName);
-    
-    const request = operation(store);
-    
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    
-    request.onerror = (event) => {
-      console.error(`Error in ${storeName} operation:`, event);
-      reject(new Error(`Database operation failed`));
-    };
-    
-    transaction.oncomplete = () => {
-      db.close();
-    };
-  });
-}
-
-// World types and operations
+/**
+ * Database schema and types
+ */
 export interface World {
-  id: string;
+  id?: string;
   name: string;
   geography: string;
   cultures: string;
@@ -98,42 +16,8 @@ export interface World {
   createdAt: string;
 }
 
-export const worldsDB = {
-  async getAll(): Promise<World[]> {
-    return dbOperation<World[]>(STORES.WORLDS, 'readonly', (store) => {
-      const index = store.index('createdAt');
-      return index.getAll();
-    });
-  },
-  
-  async getById(id: string): Promise<World | undefined> {
-    return dbOperation<World | undefined>(STORES.WORLDS, 'readonly', (store) => {
-      return store.get(id);
-    });
-  },
-  
-  async create(world: World): Promise<string> {
-    return dbOperation<IDBValidKey>(STORES.WORLDS, 'readwrite', (store) => {
-      return store.add(world);
-    }) as Promise<string>;
-  },
-  
-  async update(world: World): Promise<string> {
-    return dbOperation<IDBValidKey>(STORES.WORLDS, 'readwrite', (store) => {
-      return store.put(world);
-    }) as Promise<string>;
-  },
-  
-  async delete(id: string): Promise<void> {
-    return dbOperation<undefined>(STORES.WORLDS, 'readwrite', (store) => {
-      return store.delete(id);
-    });
-  }
-};
-
-// Character types and operations
 export interface Character {
-  id: string;
+  id?: string;
   name: string;
   worldId: string;
   profile: string;
@@ -143,49 +27,8 @@ export interface Character {
   createdAt: string;
 }
 
-export const charactersDB = {
-  async getAll(): Promise<Character[]> {
-    return dbOperation<Character[]>(STORES.CHARACTERS, 'readonly', (store) => {
-      const index = store.index('createdAt');
-      return index.getAll();
-    });
-  },
-  
-  async getById(id: string): Promise<Character | undefined> {
-    return dbOperation<Character | undefined>(STORES.CHARACTERS, 'readonly', (store) => {
-      return store.get(id);
-    });
-  },
-  
-  async getByWorldId(worldId: string): Promise<Character[]> {
-    return dbOperation<Character[]>(STORES.CHARACTERS, 'readonly', (store) => {
-      const index = store.index('worldId');
-      return index.getAll(worldId);
-    });
-  },
-  
-  async create(character: Character): Promise<string> {
-    return dbOperation<IDBValidKey>(STORES.CHARACTERS, 'readwrite', (store) => {
-      return store.add(character);
-    }) as Promise<string>;
-  },
-  
-  async update(character: Character): Promise<string> {
-    return dbOperation<IDBValidKey>(STORES.CHARACTERS, 'readwrite', (store) => {
-      return store.put(character);
-    }) as Promise<string>;
-  },
-  
-  async delete(id: string): Promise<void> {
-    return dbOperation<undefined>(STORES.CHARACTERS, 'readwrite', (store) => {
-      return store.delete(id);
-    });
-  }
-};
-
-// Story types and operations
 export interface Story {
-  id: string;
+  id?: string;
   title: string;
   worldId: string;
   plotStructure: string;
@@ -196,196 +39,351 @@ export interface Story {
 }
 
 export interface StoryCharacter {
+  id?: number;
   storyId: string;
   characterId: string;
 }
 
-export const storiesDB = {
-  async getAll(): Promise<Story[]> {
-    return dbOperation<Story[]>(STORES.STORIES, 'readonly', (store) => {
-      const index = store.index('createdAt');
-      return index.getAll();
+/**
+ * WordForgeDatabase class
+ * Extends Dexie to provide typed access to our database tables
+ */
+class WordForgeDatabase extends Dexie {
+  worlds!: Table<World, string>;
+  characters!: Table<Character, string>;
+  stories!: Table<Story, string>;
+  storyCharacters!: Table<StoryCharacter, number>;
+
+  constructor() {
+    super('WordForgeDB');
+
+    // Define tables and indexes
+    this.version(1).stores({
+      worlds: 'id, createdAt',
+      characters: 'id, worldId, createdAt',
+      stories: 'id, worldId, createdAt',
+      storyCharacters: '++id, storyId, characterId'
     });
-  },
-  
-  async getById(id: string): Promise<Story | undefined> {
-    return dbOperation<Story | undefined>(STORES.STORIES, 'readonly', (store) => {
-      return store.get(id);
-    });
-  },
-  
-  async getByWorldId(worldId: string): Promise<Story[]> {
-    return dbOperation<Story[]>(STORES.STORIES, 'readonly', (store) => {
-      const index = store.index('worldId');
-      return index.getAll(worldId);
-    });
-  },
-  
-  async create(story: Story, characterIds: string[] = []): Promise<string> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORES.STORIES, STORES.STORY_CHARACTERS], 'readwrite');
-      
-      transaction.onerror = (event) => {
-        console.error('Transaction error:', event);
-        reject(new Error('Failed to create story'));
-      };
-      
-      const storyStore = transaction.objectStore(STORES.STORIES);
-      const storyRequest = storyStore.add(story);
-      
-      storyRequest.onsuccess = () => {
-        const storyId = storyRequest.result as string;
-        
-        // If there are characters to associate
-        if (characterIds.length > 0) {
-          const storyCharacterStore = transaction.objectStore(STORES.STORY_CHARACTERS);
-          
-          // Add each character association
-          for (const characterId of characterIds) {
-            storyCharacterStore.add({ storyId, characterId });
-          }
-        }
-        
-        resolve(storyId);
-      };
-      
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    });
-  },
-  
-  async update(story: Story, characterIds: string[] = []): Promise<string> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORES.STORIES, STORES.STORY_CHARACTERS], 'readwrite');
-      
-      transaction.onerror = (event) => {
-        console.error('Transaction error:', event);
-        reject(new Error('Failed to update story'));
-      };
-      
-      const storyStore = transaction.objectStore(STORES.STORIES);
-      const storyRequest = storyStore.put(story);
-      
-      storyRequest.onsuccess = () => {
-        const storyId = story.id;
-        const storyCharacterStore = transaction.objectStore(STORES.STORY_CHARACTERS);
-        
-        // Delete existing character associations
-        const index = storyCharacterStore.index('storyId');
-        const cursorRequest = index.openCursor(IDBKeyRange.only(storyId));
-        
-        cursorRequest.onsuccess = (event) => {
-          const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-          if (cursor) {
-            storyCharacterStore.delete(cursor.primaryKey);
-            cursor.continue();
-          } else {
-            // After deleting all existing associations, add the new ones
-            for (const characterId of characterIds) {
-              storyCharacterStore.add({ storyId, characterId });
+  }
+
+  /**
+   * Initialize the database and migrate data from localStorage if needed
+   */
+  async initialize(): Promise<void> {
+    // Skip initialization on server-side
+    if (typeof window === 'undefined') return;
+
+    try {
+      // Check if we've already migrated from localStorage
+      const migrated = localStorage.getItem('indexeddb-migration-complete');
+      if (migrated) return;
+
+      // Check if there's data in localStorage to migrate
+      const worldsJSON = localStorage.getItem('worlds');
+      const charactersJSON = localStorage.getItem('characters');
+      const storiesJSON = localStorage.getItem('stories');
+      const storyCharactersJSON = localStorage.getItem('story_characters');
+
+      // Start a transaction for all migrations
+      await this.transaction('rw',
+        [this.worlds, this.characters, this.stories, this.storyCharacters],
+        async () => {
+          // Migrate worlds
+          if (worldsJSON) {
+            const worlds = JSON.parse(worldsJSON);
+            for (const world of worlds) {
+              await this.worlds.put(world);
             }
           }
-        };
-        
-        resolve(storyId);
-      };
-      
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    });
-  },
-  
-  async delete(id: string): Promise<void> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORES.STORIES, STORES.STORY_CHARACTERS], 'readwrite');
-      
-      transaction.onerror = (event) => {
-        console.error('Transaction error:', event);
-        reject(new Error('Failed to delete story'));
-      };
-      
-      // Delete the story
-      const storyStore = transaction.objectStore(STORES.STORIES);
-      storyStore.delete(id);
-      
-      // Delete character associations
-      const storyCharacterStore = transaction.objectStore(STORES.STORY_CHARACTERS);
-      const index = storyCharacterStore.index('storyId');
-      const cursorRequest = index.openCursor(IDBKeyRange.only(id));
-      
-      cursorRequest.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-        if (cursor) {
-          storyCharacterStore.delete(cursor.primaryKey);
-          cursor.continue();
+
+          // Migrate characters
+          if (charactersJSON) {
+            const characters = JSON.parse(charactersJSON);
+            for (const character of characters) {
+              await this.characters.put(character);
+            }
+          }
+
+          // Migrate stories
+          if (storiesJSON) {
+            const stories = JSON.parse(storiesJSON);
+            for (const story of stories) {
+              await this.stories.put(story);
+            }
+          }
+
+          // Migrate story characters
+          if (storyCharactersJSON) {
+            const storyCharacters = JSON.parse(storyCharactersJSON);
+            for (const sc of storyCharacters) {
+              await this.storyCharacters.put(sc);
+            }
+          }
         }
-      };
-      
-      transaction.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-    });
+      );
+
+      // Mark migration as complete
+      localStorage.setItem('indexeddb-migration-complete', 'true');
+      console.log('Migration from localStorage to IndexedDB complete');
+    } catch (error) {
+      console.error('Error initializing database:', error);
+    }
+  }
+
+  /**
+   * Export all data to JSON for backup
+   */
+  async exportData(): Promise<string> {
+    // Skip on server-side
+    if (typeof window === 'undefined') return '{}';
+
+    const worlds = await this.worlds.toArray();
+    const characters = await this.characters.toArray();
+    const stories = await this.stories.toArray();
+    const storyCharacters = await this.storyCharacters.toArray();
+
+    const data = {
+      worlds,
+      characters,
+      stories,
+      storyCharacters
+    };
+
+    return JSON.stringify(data, null, 2);
+  }
+
+  /**
+   * Import data from JSON backup
+   */
+  async importData(jsonData: string): Promise<void> {
+    // Skip on server-side
+    if (typeof window === 'undefined') return;
+
+    try {
+      const data = JSON.parse(jsonData);
+
+      await this.transaction('rw',
+        [this.worlds, this.characters, this.stories, this.storyCharacters],
+        async () => {
+          // Clear existing data
+          await this.worlds.clear();
+          await this.characters.clear();
+          await this.stories.clear();
+          await this.storyCharacters.clear();
+
+          // Import new data
+          if (data.worlds) {
+            await this.worlds.bulkPut(data.worlds);
+          }
+
+          if (data.characters) {
+            await this.characters.bulkPut(data.characters);
+          }
+
+          if (data.stories) {
+            await this.stories.bulkPut(data.stories);
+          }
+
+          if (data.storyCharacters) {
+            await this.storyCharacters.bulkPut(data.storyCharacters);
+          }
+        }
+      );
+
+      console.log('Data import complete');
+    } catch (error) {
+      console.error('Error importing data:', error);
+      throw new Error('Failed to import data');
+    }
+  }
+}
+
+// Create and export a single instance of the database
+export const db = new WordForgeDatabase();
+
+// Helper function to generate a unique ID
+export function generateId(): string {
+  return Date.now().toString();
+}
+
+// Helper function to get current date in ISO format
+export function getCurrentDate(): string {
+  return new Date().toISOString();
+}
+
+// World operations
+export const worldsDB = {
+  async getAll(): Promise<World[]> {
+    return await db.worlds.orderBy('createdAt').reverse().toArray();
   },
-  
-  async getCharacters(storyId: string): Promise<string[]> {
-    return dbOperation<StoryCharacter[]>(STORES.STORY_CHARACTERS, 'readonly', (store) => {
-      const index = store.index('storyId');
-      return index.getAll(storyId);
-    }).then(storyCharacters => storyCharacters.map(sc => sc.characterId));
+
+  async getById(id: string): Promise<World | undefined> {
+    return await db.worlds.get(id);
+  },
+
+  async create(worldData: Omit<World, 'id' | 'createdAt'>): Promise<string> {
+    const id = generateId();
+    const world: World = {
+      ...worldData,
+      id,
+      createdAt: getCurrentDate()
+    };
+
+    await db.worlds.add(world);
+    return id;
+  },
+
+  async update(world: World): Promise<string> {
+    if (!world.id) throw new Error('World ID is required');
+    await db.worlds.put(world);
+    return world.id;
+  },
+
+  async delete(id: string): Promise<void> {
+    // Delete the world
+    await db.worlds.delete(id);
+
+    // Delete related characters
+    await db.characters.where('worldId').equals(id).delete();
+
+    // Delete related stories
+    const storiesToDelete = await db.stories.where('worldId').equals(id).toArray();
+    for (const story of storiesToDelete) {
+      if (story.id) {
+        // Delete story character relationships
+        await db.storyCharacters.where('storyId').equals(story.id).delete();
+        // Delete the story
+        await db.stories.delete(story.id);
+      }
+    }
   }
 };
 
-// Export a function to check if IndexedDB is supported
-export function isIndexedDBSupported(): boolean {
-  return !!window.indexedDB;
-}
+// Character operations
+export const charactersDB = {
+  async getAll(): Promise<Character[]> {
+    return await db.characters.orderBy('createdAt').reverse().toArray();
+  },
 
-// Function to migrate data from localStorage to IndexedDB (if needed)
-export async function migrateFromLocalStorage(): Promise<void> {
-  try {
-    // Check if we've already migrated
-    const migrated = localStorage.getItem('indexeddb-migration-complete');
-    if (migrated) return;
-    
-    // Migrate worlds
-    const worldsJSON = localStorage.getItem('worlds');
-    if (worldsJSON) {
-      const worlds = JSON.parse(worldsJSON);
-      for (const world of worlds) {
-        await worldsDB.create(world);
-      }
-    }
-    
-    // Migrate characters
-    const charactersJSON = localStorage.getItem('characters');
-    if (charactersJSON) {
-      const characters = JSON.parse(charactersJSON);
-      for (const character of characters) {
-        await charactersDB.create(character);
-      }
-    }
-    
-    // Migrate stories
-    const storiesJSON = localStorage.getItem('stories');
-    if (storiesJSON) {
-      const stories = JSON.parse(storiesJSON);
-      for (const story of stories) {
-        const { characterIds, ...storyData } = story;
-        await storiesDB.create(storyData, characterIds || []);
-      }
-    }
-    
-    // Mark migration as complete
-    localStorage.setItem('indexeddb-migration-complete', 'true');
-    
-    console.log('Migration from localStorage to IndexedDB complete');
-  } catch (error) {
-    console.error('Error migrating data from localStorage:', error);
+  async getById(id: string): Promise<Character | undefined> {
+    return await db.characters.get(id);
+  },
+
+  async getByWorldId(worldId: string): Promise<Character[]> {
+    return await db.characters.where('worldId').equals(worldId).toArray();
+  },
+
+  async create(characterData: Omit<Character, 'id' | 'createdAt'>): Promise<string> {
+    const id = generateId();
+    const character: Character = {
+      ...characterData,
+      id,
+      createdAt: getCurrentDate()
+    };
+
+    await db.characters.add(character);
+    return id;
+  },
+
+  async update(character: Character): Promise<string> {
+    if (!character.id) throw new Error('Character ID is required');
+    await db.characters.put(character);
+    return character.id;
+  },
+
+  async delete(id: string): Promise<void> {
+    // Delete the character
+    await db.characters.delete(id);
+
+    // Delete character from story relationships
+    await db.storyCharacters.where('characterId').equals(id).delete();
   }
-}
+};
+
+// Story operations
+export const storiesDB = {
+  async getAll(): Promise<Story[]> {
+    return await db.stories.orderBy('createdAt').reverse().toArray();
+  },
+
+  async getById(id: string): Promise<Story | undefined> {
+    return await db.stories.get(id);
+  },
+
+  async getByWorldId(worldId: string): Promise<Story[]> {
+    return await db.stories.where('worldId').equals(worldId).toArray();
+  },
+
+  async create(storyData: Omit<Story, 'id' | 'createdAt'>, characterIds: string[] = []): Promise<string> {
+    const id = generateId();
+    const story: Story = {
+      ...storyData,
+      id,
+      createdAt: getCurrentDate()
+    };
+
+    // Use a transaction to ensure all operations succeed or fail together
+    await db.transaction('rw', [db.stories, db.storyCharacters], async () => {
+      // Add the story
+      await db.stories.add(story);
+
+      // Add character relationships
+      for (const characterId of characterIds) {
+        await db.storyCharacters.add({
+          storyId: id,
+          characterId
+        });
+      }
+    });
+
+    return id;
+  },
+
+  async update(story: Story, characterIds: string[] = []): Promise<string> {
+    if (!story.id) throw new Error('Story ID is required');
+
+    // Use a transaction to ensure all operations succeed or fail together
+    await db.transaction('rw', [db.stories, db.storyCharacters], async () => {
+      // Update the story
+      await db.stories.put(story);
+
+      // Remove existing character relationships
+      await db.storyCharacters.where('storyId').equals(story.id).delete();
+
+      // Add new character relationships
+      for (const characterId of characterIds) {
+        await db.storyCharacters.add({
+          storyId: story.id,
+          characterId
+        });
+      }
+    });
+
+    return story.id;
+  },
+
+  async delete(id: string): Promise<void> {
+    // Use a transaction to ensure all operations succeed or fail together
+    await db.transaction('rw', [db.stories, db.storyCharacters], async () => {
+      // Delete story character relationships
+      await db.storyCharacters.where('storyId').equals(id).delete();
+
+      // Delete the story
+      await db.stories.delete(id);
+    });
+  },
+
+  async getCharacters(storyId: string): Promise<string[]> {
+    const relationships = await db.storyCharacters
+      .where('storyId')
+      .equals(storyId)
+      .toArray();
+
+    return relationships.map(r => r.characterId);
+  }
+};
+
+// Initialize the database
+db.initialize().catch(error => {
+  console.error('Failed to initialize database:', error);
+});

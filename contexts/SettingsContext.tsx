@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 
 /**
  * Settings Context Module
@@ -68,69 +68,96 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({
   children,
   initialSettings = {}
 }) => {
-  // Initialize state with default settings merged with any provided initialSettings
-  const [settings, setSettings] = useState<Settings>({
-    ...defaultSettings,
-    ...initialSettings
-  });
+  // Use a ref to track initialization state
+  const isInitialized = useRef(false);
 
-  // Helper function to save settings to localStorage - no dependencies needed
-  const saveSettings = useCallback((settingsToSave: Settings) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave));
-  }, []);
+  // Initialize state with default settings
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
 
-  // Load settings from localStorage on mount
+  // Load settings from localStorage on mount (only once)
   useEffect(() => {
-    // Define this function inside useEffect to avoid dependency issues
-    const loadSettings = () => {
+    // Skip on server-side or if already initialized
+    if (typeof window === 'undefined' || isInitialized.current) return;
+
+    try {
       const savedSettings = localStorage.getItem(STORAGE_KEY);
+
       if (savedSettings) {
-        try {
-          const parsedSettings = JSON.parse(savedSettings);
-          setSettings({
-            ...defaultSettings, // Always include defaults for new settings
-            ...parsedSettings,  // Override with saved settings
-            ...initialSettings // Override with any initial settings passed as props
-          });
-        } catch (error) {
-          console.error("Failed to parse settings:", error);
-          // If parsing fails, reset to defaults
-          saveSettings({
-            ...defaultSettings,
-            ...initialSettings
-          });
-        }
+        // Parse saved settings
+        const parsedSettings = JSON.parse(savedSettings);
+
+        // Merge defaults, saved settings, and initial settings
+        const mergedSettings = {
+          ...defaultSettings,
+          ...parsedSettings,
+          ...initialSettings
+        };
+
+        // Update state
+        setSettings(mergedSettings);
+
+        // Save the merged settings back to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
       } else {
-        // If no settings exist, save defaults
-        saveSettings({
+        // No saved settings, use defaults + initial settings
+        const defaultValues = {
           ...defaultSettings,
           ...initialSettings
-        });
+        };
+
+        // Update state
+        setSettings(defaultValues);
+
+        // Save to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultValues));
       }
-    };
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      // On error, use defaults + initial settings
+      const fallbackSettings = {
+        ...defaultSettings,
+        ...initialSettings
+      };
 
-    loadSettings();
-    // Only depend on initialSettings since saveSettings never changes
-  }, [initialSettings, saveSettings]);
+      setSettings(fallbackSettings);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackSettings));
+    }
 
-  // Update settings - using function form of setState to avoid dependency on settings
+    // Mark as initialized
+    isInitialized.current = true;
+  }, []); // Empty dependency array - only run once on mount
+
+  // Update settings
   const updateSettings = useCallback((newSettings: Partial<Settings>) => {
     setSettings(prevSettings => {
+      // Create updated settings
       const updatedSettings = { ...prevSettings, ...newSettings };
-      saveSettings(updatedSettings);
+
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSettings));
+      }
+
       return updatedSettings;
     });
-  }, [saveSettings]); // Only depend on saveSettings
+  }, []); // No dependencies
 
   // Reset settings to defaults
   const resetSettings = useCallback(() => {
+    // Create reset values
     const resetValues = {
       ...defaultSettings,
       ...initialSettings
     };
+
+    // Update state
     setSettings(resetValues);
-    saveSettings(resetValues);
-  }, [initialSettings, saveSettings]);
+
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(resetValues));
+    }
+  }, [initialSettings]); // Only depend on initialSettings
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>

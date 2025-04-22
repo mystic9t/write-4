@@ -2,14 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import {
+  db,
   worldsDB,
   charactersDB,
   storiesDB,
   World,
   Character,
-  Story,
-  isIndexedDBSupported,
-  migrateFromLocalStorage
+  Story
 } from "@/lib/db";
 
 /**
@@ -91,12 +90,12 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const isSupported = typeof window !== 'undefined' ? isIndexedDBSupported() : false;
+  const isSupported = typeof window !== 'undefined';
 
-  // Load data from IndexedDB - defined with useCallback to avoid recreation
+  // Load data from Dexie database - defined with useCallback to avoid recreation
   const loadData = useCallback(async () => {
     if (!isSupported) {
-      setError("IndexedDB is not supported in this browser");
+      setError("Browser storage is not supported");
       setIsLoading(false);
       return;
     }
@@ -104,12 +103,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
     try {
       setIsLoading(true);
 
-      // Migrate data from localStorage if needed and not disabled
-      if (!disableMigration) {
-        await migrateFromLocalStorage();
-      }
-
-      // Load data from IndexedDB
+      // Load data from Dexie database
       const [worldsData, charactersData, storiesData] = await Promise.all([
         worldsDB.getAll(),
         charactersDB.getAll(),
@@ -122,12 +116,17 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
       setError(null);
     } catch (err) {
       console.error("Error loading data:", err);
-      setError("Failed to load data from the database");
+      setError("Failed to load data. Using empty database.");
+
+      // Set empty arrays to allow the app to function without database
+      setWorlds([]);
+      setCharacters([]);
+      setStories([]);
     } finally {
       setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSupported, disableMigration]); // Only depend on these values
+  }, [disableMigration]); // Only depend on disableMigration
 
   // Initial data load
   useEffect(() => {
@@ -147,14 +146,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
 
   const createWorld = async (worldData: Omit<World, "id" | "createdAt">) => {
     try {
-      const id = Date.now().toString();
-      const world: World = {
-        ...worldData,
-        id,
-        createdAt: new Date().toISOString()
-      };
-
-      await worldsDB.create(world);
+      // Use the create method from our Dexie implementation
+      const id = await worldsDB.create(worldData);
       await loadData(); // Refresh data
       return id;
     } catch (err) {
@@ -210,14 +203,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
 
   const createCharacter = async (characterData: Omit<Character, "id" | "createdAt">) => {
     try {
-      const id = Date.now().toString();
-      const character: Character = {
-        ...characterData,
-        id,
-        createdAt: new Date().toISOString()
-      };
-
-      await charactersDB.create(character);
+      // Use the create method from our Dexie implementation
+      const id = await charactersDB.create(characterData);
       await loadData(); // Refresh data
       return id;
     } catch (err) {
@@ -273,14 +260,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
 
   const createStory = async (storyData: Omit<Story, "id" | "createdAt">, characterIds: string[] = []) => {
     try {
-      const id = Date.now().toString();
-      const story: Story = {
-        ...storyData,
-        id,
-        createdAt: new Date().toISOString()
-      };
-
-      await storiesDB.create(story, characterIds);
+      // Use the create method from our Dexie implementation
+      const id = await storiesDB.create(storyData, characterIds);
       await loadData(); // Refresh data
       return id;
     } catch (err) {
