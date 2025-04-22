@@ -8,6 +8,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { ArrowLeft, Save } from "lucide-react";
 
+// Dynamically import the DocumentSelector to avoid SSR issues
+const DocumentSelector = dynamic(
+  () => import("@/components/Editor/DocumentSelector"),
+  { ssr: false }
+);
+
 // Dynamically import the TextEditor to avoid SSR issues with TipTap
 const TextEditor = dynamic(
   () => import("@/components/Editor/TextEditor"),
@@ -23,9 +29,14 @@ export default function EditorPage() {
   const type = searchParams.get('type') || 'generic';
   const id = searchParams.get('id') || '';
   const referrer = searchParams.get('referrer') || '/';
+  const urlTitle = searchParams.get('title') || '';
+  const urlSubType = searchParams.get('subType') || '';
+  const urlContent = searchParams.get('content') || '';
+  const urlWorldId = searchParams.get('worldId') || '';
+  const urlCharacterIds = searchParams.get('characterIds') || '[]';
 
-  const [content, setContent] = useState("");
-  const [title, setTitle] = useState("Untitled Document");
+  const [content, setContent] = useState(urlContent || "");
+  const [title, setTitle] = useState(urlTitle || "Untitled Document");
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
@@ -33,12 +44,40 @@ export default function EditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [documentType, setDocumentType] = useState<'world' | 'character' | 'story' | 'generic'>(type as any || 'generic');
   const [documentId, setDocumentId] = useState<string>(id);
+  const [subType, setSubType] = useState<string>(urlSubType || "");
+
+  // Initialize document relations from URL parameters
   const [documentRelations, setDocumentRelations] = useState<{
     worldId?: string;
     worldName?: string;
     characterIds?: string[];
     characterNames?: string[];
-  }>({});
+  }>(() => {
+    const relations: any = {};
+
+    if (urlWorldId) {
+      relations.worldId = urlWorldId;
+      const world = worlds.find(w => w.id === urlWorldId);
+      if (world) relations.worldName = world.name;
+    }
+
+    if (urlCharacterIds) {
+      try {
+        const charIds = JSON.parse(urlCharacterIds);
+        if (Array.isArray(charIds)) {
+          relations.characterIds = charIds;
+          relations.characterNames = charIds.map(charId => {
+            const char = characters.find(c => c.id === charId);
+            return char ? char.name : charId;
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing character IDs:', e);
+      }
+    }
+
+    return relations;
+  });
 
   // Update metrics when content changes
   useEffect(() => {
@@ -188,6 +227,11 @@ export default function EditorPage() {
   // Load document data based on type and id
   useEffect(() => {
     const loadDocumentData = async () => {
+      // If we have content from URL parameters, use that instead of loading from elsewhere
+      if (urlContent) {
+        return; // Content already set in state initialization
+      }
+
       if (!id) {
         // No ID provided, load from localStorage
         if (typeof window !== 'undefined') {
@@ -318,6 +362,121 @@ ${story.themes}`;
     }
   };
 
+  // Handle loading a document when selected from the DocumentSelector
+  const handleDocumentSelect = useCallback(async (id: string, type: 'world' | 'character' | 'story') => {
+    // Update URL with the new document ID and type
+    router.push(`/editor?type=${type}&id=${id}`);
+
+    // Update state
+    setDocumentType(type);
+    setDocumentId(id);
+
+    // Load document data
+    try {
+      switch (type) {
+        case 'world':
+          const world = worlds.find(w => w.id === id);
+          if (world) {
+            setTitle(world.name);
+            // Combine world data into a single document
+            const worldContent = `<h1>${world.name}</h1>
+<h2>Geography</h2>
+${world.geography}
+
+<h2>Cultures</h2>
+${world.cultures}
+
+<h2>Magic Systems</h2>
+${world.magicSystems}
+
+<h2>History</h2>
+${world.history}`;
+            setContent(worldContent);
+            setSubType('geography'); // Default sub-type
+          }
+          break;
+
+        case 'character':
+          const character = characters.find(c => c.id === id);
+          if (character) {
+            setTitle(character.name);
+            // Combine character data into a single document
+            const characterContent = `<h1>${character.name}</h1>
+<h2>Profile</h2>
+${character.profile}
+
+<h2>Backstory</h2>
+${character.backstory}
+
+<h2>Relationships</h2>
+${character.relationships}
+
+<h2>Character Arc</h2>
+${character.characterArc}`;
+            setContent(characterContent);
+            setSubType('profile'); // Default sub-type
+
+            // Set relations
+            if (character.worldId) {
+              const relatedWorld = worlds.find(w => w.id === character.worldId);
+              setDocumentRelations({
+                worldId: character.worldId,
+                worldName: relatedWorld?.name
+              });
+            }
+          }
+          break;
+
+        case 'story':
+          const story = stories.find(s => s.id === id);
+          if (story) {
+            setTitle(story.title);
+            // Combine story data into a single document
+            const storyContent = `<h1>${story.title}</h1>
+<h2>Plot Structure</h2>
+${story.plotStructure}
+
+<h2>Scenes</h2>
+${story.scenes}
+
+<h2>Dialogue</h2>
+${story.dialogue}
+
+<h2>Themes</h2>
+${story.themes}`;
+            setContent(storyContent);
+            setSubType('plot'); // Default sub-type
+
+            // Set relations
+            const relations: any = {};
+            if (story.worldId) {
+              const relatedWorld = worlds.find(w => w.id === story.worldId);
+              relations.worldId = story.worldId;
+              relations.worldName = relatedWorld?.name;
+            }
+
+            // Get character relationships
+            const storyCharacters = await getStoryCharacters(story.id);
+            if (storyCharacters && storyCharacters.length > 0) {
+              const characterIds = storyCharacters;
+              const characterNames = characterIds.map(charId => {
+                const char = characters.find(c => c.id === charId);
+                return char ? char.name : charId;
+              });
+              relations.characterIds = characterIds;
+              relations.characterNames = characterNames;
+            }
+
+            setDocumentRelations(relations);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error loading document:', error);
+      alert('Failed to load document. Please try again.');
+    }
+  }, [worlds, characters, stories, router, getStoryCharacters]);
+
   const handleAnalyzeContent = () => {
     setIsAnalyzing(true);
 
@@ -349,6 +508,12 @@ ${story.themes}`;
             />
           </div>
           <div className="flex items-center gap-4">
+            <div className="w-64">
+              <DocumentSelector
+                documentType={documentType}
+                onSelect={handleDocumentSelect}
+              />
+            </div>
             <button
               onClick={saveDocument}
               disabled={isSaving}
@@ -394,6 +559,8 @@ ${story.themes}`;
               documentRelations={documentRelations}
               onSave={saveDocument}
               isSaving={isSaving}
+              subType={subType}
+              setSubType={setSubType}
             />
           </div>
         </div>

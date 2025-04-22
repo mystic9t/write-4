@@ -406,7 +406,20 @@ export default function CreateWorldPage() {
 
             <div className="flex justify-end gap-4">
               <Link
-                href={`/editor?type=world&referrer=/world-building/create`}
+                href={`/editor?type=world&referrer=/world-building/create&title=${encodeURIComponent(worldName)}&subType=${encodeURIComponent(activeTab)}&content=${encodeURIComponent(
+                  `<h1>${worldName}</h1>
+<h2>Geography</h2>
+${geography}
+
+<h2>Cultures</h2>
+${cultures}
+
+<h2>Magic Systems</h2>
+${magicSystems}
+
+<h2>History</h2>
+${history}`
+                )}`}
                 className="flex items-center px-6 py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 shadow-lg hover:shadow-dark-800/20 hover:-translate-y-1 border border-dark-700"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

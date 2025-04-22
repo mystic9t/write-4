@@ -105,12 +105,18 @@ export default function WorldBuildingPage() {
             </ul>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             <Link
               href="/world-building/create"
               className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-all duration-300 shadow-lg hover:shadow-primary-600/20 hover:-translate-y-1"
             >
               Create New World
+            </Link>
+            <Link
+              href="/world-building/list"
+              className="px-6 py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 shadow-lg hover:shadow-dark-800/20 hover:-translate-y-1 border border-dark-700"
+            >
+              Expand an Existing World
             </Link>
           </div>
         </div>

@@ -551,7 +551,20 @@ export default function CreateStoryPage() {
 
             <div className="flex justify-end gap-4">
               <Link
-                href={`/editor?type=story&referrer=/story-crafting/create`}
+                href={`/editor?type=story&referrer=/story-crafting/create&title=${encodeURIComponent(storyTitle)}&subType=${encodeURIComponent(activeTab)}&content=${encodeURIComponent(
+                  `<h1>${storyTitle}</h1>
+<h2>Plot Structure</h2>
+${plotStructure}
+
+<h2>Scenes</h2>
+${scenes}
+
+<h2>Dialogue</h2>
+${dialogue}
+
+<h2>Themes</h2>
+${themes}`
+                )}&worldId=${selectedWorldId || ''}&characterIds=${encodeURIComponent(JSON.stringify(selectedCharacterIds))}`}
                 className="flex items-center px-6 py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 shadow-lg hover:shadow-dark-800/20 hover:-translate-y-1 border border-dark-700"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

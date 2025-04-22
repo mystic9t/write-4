@@ -25,6 +25,8 @@ interface MetricsSidebarProps {
   };
   onSave: () => void;
   isSaving: boolean;
+  subType: string;
+  setSubType: (subType: string) => void;
 }
 
 const MetricsSidebar: React.FC<MetricsSidebarProps> = ({
@@ -38,11 +40,12 @@ const MetricsSidebar: React.FC<MetricsSidebarProps> = ({
   documentId,
   documentRelations,
   onSave,
-  isSaving
+  isSaving,
+  subType,
+  setSubType
 }) => {
   const [fontFamily, setFontFamily] = useState("Inter");
   const [fontSize, setFontSize] = useState("16px");
-  const [subType, setSubType] = useState("");
 
   const fontOptions = [
     "Inter", "Arial", "Georgia", "Times New Roman", "Courier New", "Verdana"
@@ -64,25 +67,24 @@ const MetricsSidebar: React.FC<MetricsSidebarProps> = ({
     switch(documentType) {
       case 'world':
         return [
-          { value: 'fantasy', label: 'Fantasy' },
-          { value: 'scifi', label: 'Science Fiction' },
-          { value: 'historical', label: 'Historical' },
-          { value: 'modern', label: 'Modern' },
-          { value: 'other', label: 'Other' }
+          { value: 'geography', label: 'Geography & Maps' },
+          { value: 'cultures', label: 'Cultures & Societies' },
+          { value: 'magic', label: 'Magic & Technology' },
+          { value: 'history', label: 'History & Timeline' }
         ];
       case 'character':
         return [
-          { value: 'protagonist', label: 'Protagonist' },
-          { value: 'antagonist', label: 'Antagonist' },
-          { value: 'supporting', label: 'Supporting' },
-          { value: 'other', label: 'Other' }
+          { value: 'profile', label: 'Character Profile' },
+          { value: 'backstory', label: 'Backstory' },
+          { value: 'relationships', label: 'Relationships' },
+          { value: 'arc', label: 'Character Arc' }
         ];
       case 'story':
         return [
-          { value: 'novel', label: 'Novel' },
-          { value: 'short_story', label: 'Short Story' },
-          { value: 'script', label: 'Script' },
-          { value: 'other', label: 'Other' }
+          { value: 'plot', label: 'Plot Structure' },
+          { value: 'scenes', label: 'Scenes' },
+          { value: 'dialogue', label: 'Dialogue' },
+          { value: 'themes', label: 'Themes' }
         ];
       default:
         return [];
@@ -109,7 +111,7 @@ const MetricsSidebar: React.FC<MetricsSidebarProps> = ({
             <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as any)}
-              className="w-full bg-dark-900 border border-dark-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark-select"
+              className="w-full bg-dark-900/95 backdrop-blur-sm border border-dark-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark-select"
             >
               {documentTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -123,7 +125,7 @@ const MetricsSidebar: React.FC<MetricsSidebarProps> = ({
               <select
                 value={subType}
                 onChange={(e) => setSubType(e.target.value)}
-                className="w-full bg-dark-900 border border-dark-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark-select"
+                className="w-full bg-dark-900/95 backdrop-blur-sm border border-dark-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark-select"
               >
                 <option value="">Select a sub-type...</option>
                 {getSubTypeOptions().map(option => (

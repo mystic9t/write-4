@@ -95,7 +95,7 @@ export default function SettingsPage() {
                 <select
                   value={aiProvider}
                   onChange={(e) => setAiProvider(e.target.value as AIProvider)}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full bg-dark-800/95 backdrop-blur-sm border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark-select"
                 >
                   <option value="gemini">Google Gemini (Recommended)</option>
                   <option value="openai">OpenAI</option>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
                     type="password"
                     value={openaiKey}
                     onChange={(e) => setOpenaiKey(e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full bg-dark-800/95 backdrop-blur-sm border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="sk-..."
                   />
                   <p className="text-dark-400 text-sm mt-1">
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                     type="password"
                     value={geminiKey}
                     onChange={(e) => setGeminiKey(e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full bg-dark-800/95 backdrop-blur-sm border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="AIza..."
                   />
                   <p className="text-dark-400 text-sm mt-1">
@@ -146,7 +146,7 @@ export default function SettingsPage() {
                     type="password"
                     value={anthropicKey}
                     onChange={(e) => setAnthropicKey(e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full bg-dark-800/95 backdrop-blur-sm border border-dark-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="sk-ant-..."
                   />
                   <p className="text-dark-400 text-sm mt-1">

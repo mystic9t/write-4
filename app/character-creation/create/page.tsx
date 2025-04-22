@@ -454,7 +454,20 @@ export default function CreateCharacterPage() {
 
             <div className="flex justify-end gap-4">
               <Link
-                href={`/editor?type=character&referrer=/character-creation/create`}
+                href={`/editor?type=character&referrer=/character-creation/create&title=${encodeURIComponent(characterName)}&subType=${encodeURIComponent(activeTab)}&content=${encodeURIComponent(
+                  `<h1>${characterName}</h1>
+<h2>Profile</h2>
+${profile}
+
+<h2>Backstory</h2>
+${backstory}
+
+<h2>Relationships</h2>
+${relationships}
+
+<h2>Character Arc</h2>
+${characterArc}`
+                )}&worldId=${selectedWorldId || ''}`}
                 className="flex items-center px-6 py-3 bg-dark-800 text-white rounded-lg hover:bg-dark-700 transition-all duration-300 shadow-lg hover:shadow-dark-800/20 hover:-translate-y-1 border border-dark-700"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

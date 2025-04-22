@@ -78,7 +78,7 @@ const DarkSelect: React.FC<DarkSelectProps> = ({
 
       {isOpen && mounted && createPortal(
         <div
-          className="fixed z-[9999] bg-dark-900 border border-dark-700 rounded-md shadow-xl max-h-60 overflow-auto dark-dropdown-menu"
+          className="fixed z-[9999] bg-dark-900/95 backdrop-blur-sm border border-dark-700 rounded-md shadow-xl max-h-60 overflow-auto dark-dropdown-menu"
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`,
@@ -88,7 +88,7 @@ const DarkSelect: React.FC<DarkSelectProps> = ({
           {options.map((option) => (
             <div
               key={option}
-              className={`p-2 hover:bg-dark-800 cursor-pointer dark-dropdown-item ${
+              className={`p-2 hover:bg-dark-800/90 cursor-pointer dark-dropdown-item ${
                 option === value ? 'bg-primary-800 text-white' : 'text-white'
               }`}
               onClick={() => handleSelect(option)}
